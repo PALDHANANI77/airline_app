@@ -1,0 +1,157 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Airline Market Demand Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    
+
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">✈️ Airline Booking Demand Insights</h1>
+
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-5 border p-4 rounded shadow-sm bg-light">
+      <div class="col-md-4">
+        <label for="route" class="form-label">Filter by Route</label>
+        <select id="route" name="route" class="form-select">
+          <option value="">All Routes</option>
+          {% for route in available_routes %}
+            <option value="{{ route }}" {% if selected_route == route %}selected{% endif %}>{{ route }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label for="start" class="form-label">Start Date</label>
+        <input type="date" class="form-control" name="start" value="{{ start_date }}">
+      </div>
+
+      <div class="col-md-3">
+        <label for="end" class="form-label">End Date</label>
+        <input type="date" class="form-control" name="end" value="{{ end_date }}">
+      </div>
+
+      <div class="col-md-2 d-grid align-items-end">
+        <button type="submit" class="btn btn-primary">Apply</button>
+      </div>
+    </form>
+
+    <!-- Charts Section -->
+    <div class="row mb-5">
+      <div class="col-md-6">
+        <h5>📈 Price Trends Over Time</h5>
+        <canvas id="priceTrendChart"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h5>🌍 Most Popular Routes</h5>
+        <canvas id="routeChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Real-time Flight Map -->
+  <div class="row mb-5">
+    <div class="col-md-12">
+      <h5>🗺️ Real-time Flight Locations</h5>
+      <div id="flightMap" style="height: 500px;"></div>
+    </div>
+  </div>
+
+  <!-- Price Forecast Section
+  <div class="row mb-5">
+    <div class="col-md-12">
+      <h5>🔮 Price Forecast (Next 7 Days)</h5>
+      <canvas id="forecastChart"></canvas>
+    </div>
+  </div> -->
+
+
+    <!-- Table -->
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <h5>💲 Average Prices by Route</h5>
+        <table class="table table-bordered table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Route</th>
+              <th>Average Price ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for route, price in insights.average_prices.items() %}
+            <tr>
+              <td>{{ route }}</td>
+              <td>{{ "%.2f"|format(price) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Script -->
+  <script>
+    {% if insights.price_trends %}
+    new Chart(document.getElementById('priceTrendChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: {{ insights.price_trends.keys() | list | tojson }},
+        datasets: [{
+          label: 'Avg Price ($)',
+          data: {{ insights.price_trends.values() | list | tojson }},
+          borderColor: '#007bff',
+          fill: false,
+          tension: 0.3
+        }]
+      }
+    });
+    {% else %}
+    document.getElementById('priceTrendChart').parentNode.innerHTML += "<p class='text-muted'>No data available for selected filters.</p>";
+    {% endif %}
+
+    {% if insights.popular_routes %}
+    new Chart(document.getElementById('routeChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: {{ insights.popular_routes.keys() | list | tojson }},
+        datasets: [{
+          label: 'Bookings Count',
+          data: {{ insights.popular_routes.values() | list | tojson }},
+          backgroundColor: '#17a2b8'
+        }]
+      }
+    });
+    {% else %}
+    document.getElementById('routeChart').parentNode.innerHTML += "<p class='text-muted'>No route data for selected filter.</p>";
+    {% endif %}
+  </script>
+
+
+  <!-- Leaflet.js CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const flightData = {{ flight_data_json|safe }};
+    const map = L.map('flightMap').setView([20.5937, 78.9629], 3); // Center on India
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    flightData.forEach(flight => {
+      const lat = flight.latitude || 20 + Math.random();  // Simulated lat/lon
+      const lon = flight.longitude || 78 + Math.random();
+      const marker = L.marker([lat, lon]).addTo(map);
+      marker.bindPopup(`<b>Route:</b> ${flight.route}<br><b>Price:</b> $${flight.price}`);
+    });
+  </script>
+
+
+
+  </body>
+  </html>
