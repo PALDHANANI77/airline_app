@@ -1,0 +1,37 @@
+**.gitignore**
+```
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# Flask
+instance/
+*.pyc
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Virtual Environment
+venv/
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints
+
+# Other
+*.bak
+*.swp
